@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" style="background-color: yellow" viewBox="-256 -256 512 512">
+      <g transform="scale(1, -1)">
+        <line x1="-256" x2="256" y1="0" y2="0" stroke="black" stroke-width="2" stroke-dasharray="5 5"/>
+        <line y1="-256" y2="256" x1="0" x2="0" stroke="darkgray" stroke-width="2" stroke-dasharray="5 5"/>
+        <circle r="128" fill="transparent" stroke="black" id="main"/>
+        <circle r="4" cx="128" cy="0" fill="pink" stroke="black" id="control1" style="cursor: grab" />
+        <circle r="4" cx="0" cy="128" fill="blue" stroke="black" id="control2" style="cursor: grab"/>
+      </g>
+    </svg>
+    <table>
+      <tr id="r0">
+        <td id="r01">1</td>
+        <td id="r02">0</td>
+        <td id="r03">0</td>
+      </tr>
+      <tr id="r1">
+        <td id="r11">0</td>
+        <td id="r12">1</td>
+        <td id="r13">0</td>
+      </tr>
+      <tr id="r2">
+        <td id="r21">0</td>
+        <td id="r22">0</td>
+        <td id="r23">1</td>
+      </tr>
+    </table>
+    <script>
+const table = document.querySelector('table')
+function updateMatrix(circle, control1, control2) {
+  const a = control1.getAttribute('cx') / 128
+  const b = control1.getAttribute('cy') / 128
+  const c = control2.getAttribute('cx') / 128
+  const d = control2.getAttribute('cy') / 128
+
+  circle.setAttribute('transform', `matrix(${a} ${b} ${c} ${d} 0 0)`)
+  table.querySelector('#r01').textContent = a.toFixed(3)
+  table.querySelector('#r11').textContent = b.toFixed(3)
+  table.querySelector('#r02').textContent = c.toFixed(3)
+  table.querySelector('#r12').textContent = d.toFixed(3)
+}
+
+const svg = document.querySelector('svg')
+const circle = svg.querySelector('#main')
+const control1 = svg.querySelector('#control1')
+const control2 = svg.querySelector('#control2')
+
+let control1Moving = false
+let control2Moving = false
+control1.onmousedown = function (ev) {
+  console.log(ev)
+  control1Moving = true
+}
+control2.onmousedown = function (ev) {
+  console.log(ev)
+  control2Moving = true
+}
+svg.onmousemove = function (ev) {
+  if (control1Moving) {
+    control1.setAttribute("cx", ev.offsetX - 256)
+    control1.setAttribute("cy", -(ev.offsetY - 256))
+  }
+  if (control2Moving) {
+    control2.setAttribute("cx", ev.offsetX - 256)
+    control2.setAttribute("cy", -(ev.offsetY - 256))
+  }
+  if (control1Moving || control2Moving) {
+    updateMatrix(circle, control1, control2)
+  }
+}
+control1.onmouseup = function (ev) {
+  console.log(ev)
+  control1Moving = false
+}
+control2.onmouseup = function (ev) {
+  console.log(ev)
+  control2Moving = false
+}
+    </script>
+  </body>
+</html>
