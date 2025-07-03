@@ -5,7 +5,17 @@
       <g transform="scale(1, -1)">
         <line x1="-256" x2="256" y1="0" y2="0" stroke="black" stroke-width="2" stroke-dasharray="5 5"/>
         <line y1="-256" y2="256" x1="0" x2="0" stroke="darkgray" stroke-width="2" stroke-dasharray="5 5"/>
+      </g>
+      <g>
+        <line x1="-128" y1="-128" x2="128" y2="-128" stroke-width="1" stroke="black" />
+        <line x1="128" y1="-128" x2="128" y2="128" stroke-width="1" stroke="black" />
+        <line x1="128" y1="128" x2="-128" y2="128" stroke-width="1" stroke="black" />
+        <line x1="-128" y1="128" x2="-128" y2="-128" stroke-width="1" stroke="black" />
+        <line x1="-128" y1="0" x2="128" y2="0" stroke-width="1" stroke="black" />
+        <line x1="0" y1="-128" x2="0" y2="128" stroke-width="1" stroke="black" />
         <circle r="128" fill="transparent" stroke="black" id="main"/>
+      </g>
+      <g transform="scale(1, -1)">
         <circle r="4" cx="128" cy="0" fill="pink" stroke="black" id="control1" style="cursor: grab" />
         <circle r="4" cx="0" cy="128" fill="blue" stroke="black" id="control2" style="cursor: grab"/>
       </g>
@@ -35,7 +45,7 @@ function updateMatrix(circle, control1, control2) {
   const c = control2.getAttribute('cx') / 128
   const d = control2.getAttribute('cy') / 128
 
-  circle.setAttribute('transform', `matrix(${a} ${b} ${c} ${d} 0 0)`)
+  circle.parentElement.setAttribute('transform', `matrix(${a} ${-b} ${-c} ${d} 0 0)`)
   table.querySelector('#r01').textContent = a.toFixed(3)
   table.querySelector('#r11').textContent = b.toFixed(3)
   table.querySelector('#r02').textContent = c.toFixed(3)
