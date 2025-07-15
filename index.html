@@ -6,21 +6,25 @@
         <line x1="-256" x2="256" y1="0" y2="0" stroke="black" stroke-width="2" stroke-dasharray="5 5"/>
         <line y1="-256" y2="256" x1="0" x2="0" stroke="darkgray" stroke-width="2" stroke-dasharray="5 5"/>
       </g>
+      <ellipse cx="0" cy="0" rx="128" ry="128" stroke-width="5" stroke="red" fill="transparent" id="ell" />
       <g>
-        <line x1="-128" y1="-128" x2="128" y2="-128" stroke-width="1" stroke="black" />
-        <line x1="128" y1="-128" x2="128" y2="128" stroke-width="1" stroke="black" />
-        <line x1="128" y1="128" x2="-128" y2="128" stroke-width="1" stroke="black" />
-        <line x1="-128" y1="128" x2="-128" y2="-128" stroke-width="1" stroke="black" />
+        <line x1="-128" y1="-128" x2="128" y2="-128" stroke-width="1" stroke="lightgray" />
+        <line x1="128" y1="-128" x2="128" y2="128" stroke-width="1" stroke="lightgray" />
+        <line x1="128" y1="128" x2="-128" y2="128" stroke-width="1" stroke="lightgray" />
+        <line x1="-128" y1="128" x2="-128" y2="-128" stroke-width="1" stroke="lightgray" />
         <line x1="-128" y1="0" x2="128" y2="0" stroke-width="1" stroke="black" />
         <line x1="0" y1="-128" x2="0" y2="128" stroke-width="1" stroke="black" />
         <circle r="128" fill="transparent" stroke="black" id="main"/>
       </g>
+      <line id="r_maj" x1="-128" x2="128" y1="0" y2="0" stroke-width="3" stroke="black" transform="scale(1, -1)" />
+      <line id="r_mnr" x1="0" x2="0" y1="-128" y2="128" stroke-width="3" stroke="black" transform="scale(1, -1)" />
       <g transform="scale(1, -1)">
         <circle r="4" cx="128" cy="0" fill="pink" stroke="black" id="control1" style="cursor: grab" />
         <circle r="4" cx="0" cy="128" fill="blue" stroke="black" id="control2" style="cursor: grab"/>
       </g>
     </svg>
     <table>
+      <caption>Affine Transform</caption>
       <tr id="r0">
         <td id="r01">1</td>
         <td id="r02">0</td>
@@ -37,8 +41,33 @@
         <td id="r23">1</td>
       </tr>
     </table>
+    <p>r_maj = <span id="sx" /></p>
+    <p>r_mnr = <span id="sy" /></p>
+    <p>theta = <span id="theta" /></p>
+    </p>
     <script>
 const table = document.querySelector('table')
+function computeEigenvectors2x2(M, lambda1, lambda2) {
+  const a = M[0][0], b = M[0][1], d = M[1][1]
+
+  const getVec = (λ) => {
+    if (Math.abs(b) > 1e-8) {
+      // Solve (M - λI)v = 0 → [a−λ, b; b, d−λ]
+      return [b, λ - a]; // orthogonal to row 1
+    } else if (Math.abs(a - λ) < Math.abs(d - λ)) {
+      return [1, 0]
+    } else {
+      return [0, 1]
+    }
+  }
+
+  return [normalize(getVec(lambda1)), normalize(getVec(lambda2))]
+}
+
+function normalize([x, y]) {
+  const len = Math.hypot(x, y)
+  return [x / len, y / len]
+}
 function updateMatrix(circle, control1, control2) {
   const a = control1.getAttribute('cx') / 128
   const b = control1.getAttribute('cy') / 128
@@ -50,6 +79,58 @@ function updateMatrix(circle, control1, control2) {
   table.querySelector('#r11').textContent = b.toFixed(3)
   table.querySelector('#r02').textContent = c.toFixed(3)
   table.querySelector('#r12').textContent = d.toFixed(3)
+
+  const A = [[a, c], [b, d]]
+  const M = [[a * a + c * c, a * b + c * d],
+             [a * b + c * d, b * b + d * d]]
+  const p = M[0][0], q = M[0][1], r = M[1][1]
+  const trace = p + r
+
+  const det = p * r - q * q
+  const delta = Math.sqrt((trace * trace) / 4 - det)
+
+  const lambda1 = trace / 2 + delta
+  const lambda2 = trace / 2 - delta
+
+  // Eigenvectors
+  let [vec1, vec2] = computeEigenvectors2x2(M, lambda1, lambda2)
+  // Normalize vectors
+  const normalize = ([x, y]) => {
+    const len = Math.hypot(x, y)
+    return [x / len, y / len]
+  }
+  vec1 = normalize(vec1)
+  vec2 = normalize(vec2)
+
+  let majorAxis, minorAxis, majorVec
+  majorAxis = Math.sqrt(lambda1)
+  minorAxis = Math.sqrt(lambda2)
+  majorVec = vec1
+
+
+  // Compute rotation angle in degrees
+  const thetaRad = Math.atan2(majorVec[1], majorVec[0])
+  const thetaDeg = thetaRad * (180 / Math.PI)
+  updateEllipse(document.querySelector('#ell'), majorAxis * 128, minorAxis * 128, thetaDeg, thetaRad)
+}
+
+function updateEllipse(ell, rx, ry, theta, thetaRad) {
+  ell.setAttribute('rx', rx)
+  ell.setAttribute('ry', ry)
+  ell.setAttribute('transform', `rotate(${-theta})`)
+  document.querySelector('#sx').textContent = (Math.max(rx, ry) / 128).toFixed(3)
+  document.querySelector('#sy').textContent = (Math.min(rx, ry) / 128).toFixed(3)
+  document.querySelector('#theta').textContent = theta.toFixed(3)
+
+  document.querySelector('#r_maj').setAttribute("x1", -rx * Math.cos(thetaRad))
+  document.querySelector('#r_maj').setAttribute("y1", -rx * Math.sin(thetaRad))
+  document.querySelector('#r_maj').setAttribute("x2", rx * Math.cos(thetaRad))
+  document.querySelector('#r_maj').setAttribute("y2", rx * Math.sin(thetaRad))
+  document.querySelector('#r_mnr').setAttribute("x1", -ry * Math.cos(thetaRad + Math.PI / 2))
+  document.querySelector('#r_mnr').setAttribute("y1", -ry * Math.sin(thetaRad + Math.PI / 2))
+  document.querySelector('#r_mnr').setAttribute("x2", ry * Math.cos(thetaRad + Math.PI / 2))
+  document.querySelector('#r_mnr').setAttribute("y2", ry * Math.sin(thetaRad + Math.PI / 2))
+
 }
 
 const svg = document.querySelector('svg')
